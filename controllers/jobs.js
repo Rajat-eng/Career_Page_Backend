@@ -11,7 +11,7 @@ exports.getJob = async function (req, res, next) {
   try {
     const resultPerPage = 4;
     let filters = req.query;
-    const currentPage = Number(filters?.page) || 1;
+    const currentPage = Number(filters && filters.page) || 1 
     const skip = resultPerPage * (currentPage - 1);
     const removeFields = ["page", "limit"];
     removeFields.forEach((key) => delete filters[key]);
