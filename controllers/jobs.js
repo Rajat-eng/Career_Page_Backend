@@ -11,10 +11,11 @@ exports.getJob = async function (req, res, next) {
   try {
     const resultPerPage = 4;
     let filters = req.query;
-    const currentPage = Number(filters && filters.page) || 1 
+    const currentPage = Number(filters && filters.page) || 1;
     const skip = resultPerPage * (currentPage - 1);
     const removeFields = ["page", "limit"];
     removeFields.forEach((key) => delete filters[key]);
+
     if (filters.hasOwnProperty("jobTitle")) {
       let val = filters.jobTitle;
       let obj = {
@@ -24,116 +25,127 @@ exports.getJob = async function (req, res, next) {
       filters.jobTitle = obj;
     }
 
-    filters = JSON.parse(
-      JSON.stringify(filters).replace(
-        /\b(gt|gte|lt|lte)\b/g,
-        (key) => `$${key}`
-      )
-    );
-
     let jobs = await Job.aggregate([
-      {
-        $match: filters,
-      },
-      {
-        $lookup: {
-          from: "applications",
-          localField: "_id",
-          foreignField: "job",
-          as: "applications",
+        {
+          $match: filters,
         },
-      },
-      {
-        $addFields: {
-          total_Applications: {
-            $size: "$applications",
-          },
-          scheduled: {
-            $map: {
-              input: {
-                $filter: {
-                  input: "$applications",
-                  as: "application",
-                  cond: "$$application.isScheduled",
+        {
+          $facet:{
+            result:[{
+              $lookup: {
+                from: "applications",
+                localField: "_id",
+                foreignField: "job",
+                as: "applications",
+              },
+            },
+            {
+              $addFields: {
+                total_Applications: {
+                  $size: "$applications",
+                },
+                scheduled: {
+                  $map: {
+                    input: {
+                      $filter: {
+                        input: "$applications",
+                        as: "application",
+                        cond: "$$application.isScheduled",
+                      },
+                    },
+                    as: "application",
+                    in: { application: "$$application" },
+                  },
+                },
+                rejected: {
+                  $map: {
+                    input: {
+                      $filter: {
+                        input: "$applications",
+                        as: "application",
+                        cond: { eq: ["$$application.status", "rejected"] },
+                      },
+                    },
+                    as: "application",
+                    in: { application: "$$application" },
+                  },
+                },
+                selected: {
+                  $map: {
+                    input: {
+                      $filter: {
+                        input: "$applications",
+                        as: "application",
+                        cond: { eq: ["$$application.status", "selected"] },
+                      },
+                    },
+                    as: "application",
+                    in: { application: "$$application" },
+                  },
                 },
               },
-              as: "application",
-              in: { application: "$$application" },
             },
-          },
-          rejected: {
-            $map: {
-              input: {
-                $filter: {
-                  input: "$applications",
-                  as: "application",
-                  cond: { eq: ["$$application.status", "rejected"] },
+            {
+              $addFields: {
+                total_Scheduled: {
+                  $size: "$scheduled",
+                },
+                total_Rejected: {
+                  $size: "$rejected",
+                },
+                total_Scheduled: {
+                  $size: "$selected",
                 },
               },
-              as: "application",
-              in: { application: "$$application" },
+            },   
+            {
+              $sort:{
+                createdAt:-1
+              }
             },
-          },
-          selected: {
-            $map: {
-              input: {
-                $filter: {
-                  input: "$applications",
-                  as: "application",
-                  cond: { eq: ["$$application.status", "selected"] },
-                },
+            {
+              $skip: skip,
+            },
+            {
+              $limit: resultPerPage,
+            }, 
+            {
+              $project: {
+                applications: 0,
+                scheduled: 0,
+                rejected: 0,
+                selected: 0,
+                __v:0,
+                updatedAt:0
               },
-              as: "application",
-              in: { application: "$$application" },
-            },
+            }],
+            jobsCount:[{
+              $count:"jobsCount"
+            }],
           },
         },
-      },
-      {
-        $addFields: {
-          total_Scheduled: {
-            $size: "$scheduled",
-          },
-          total_Rejected: {
-            $size: "$rejected",
-          },
-          total_Scheduled: {
-            $size: "$selected",
-          },
+        {
+          $project:{
+            result:1,
+            jobsCount:{
+              $arrayElemAt:["$jobsCount",0]
+            }
+          }
         },
-      },
-      {
-        $skip: skip,
-      },
-      {
-        $limit: resultPerPage,
-      },
-      {
-        $sort:{
-          createdAt:-1
-        }
-      },
-      {
-        $project: {
-          applications: 0,
-          scheduled: 0,
-          rejected: 0,
-          selected: 0,
-        },
-      },
-    ]);
+    ])
 
-    await Category.populate(jobs, {
-      path: "category",
-    });
-
-    const jobsCount = await Job.countDocuments();
-
+    let jobsCount=0
+    if(jobs[0].result.length>0){
+      await Category.populate(jobs[0].result, {
+        path: "category",
+      });
+      jobsCount=jobs[0].jobsCount.jobsCount
+    }
     return res.status(200).json({
       success: true,
-      jobs,
+      jobs:jobs[0].result,
       jobsCount,
-      resultPerPage,
+      resultPerPage
     });
   } catch (error) {
     console.log(error);
@@ -201,7 +213,6 @@ exports.applyJob = async function (req, res, next) {
 // post a job
 exports.postJob = async function (req, res) {
   try {
-    console.log(req.body)
     const slug = slugify(req.body.categoryTitle, {
       lower: true,
       trim: true,
@@ -210,7 +221,7 @@ exports.postJob = async function (req, res) {
 
     const category = await Category.findOneAndUpdate(
       {
-        slug
+        slug,
       },
       {
         $set: {
@@ -218,14 +229,14 @@ exports.postJob = async function (req, res) {
         },
       },
       {
-        new:true,
+        new: true,
         upsert: true,
       }
     );
 
     const job = await Job.create({
       ...req.body,
-      lastApply:new Date(req.body.lastApply).getTime(),
+      lastApply: new Date(req.body.lastApply).getTime(),
       category: category._id,
     });
 
