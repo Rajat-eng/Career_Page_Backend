@@ -41,6 +41,10 @@ const applicationSchema = new mongoose.Schema({
     default: "applied",
     // required:true
   },
+  isDeleted:{
+    type:Boolean,
+    default:false
+  }
 },{
   timestamps:true
 }

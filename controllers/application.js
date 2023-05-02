@@ -49,7 +49,7 @@ exports.applicationStatus=async function(req,res,next){
 exports.getApplications = async function (req, res) {
   try {
     const resultPerpage=10;
-    let apiFeature = new ApiFeatures(Application.find(), req.query).filter().pagination(resultPerpage)
+    let apiFeature = new ApiFeatures(Application.find({isDeleted:false}), req.query).filter().pagination(resultPerpage)
 
     let applications = await apiFeature.query.populate([ { path: "job" }, { path: "applicant" } ]).sort({createdAt:-1})
 

@@ -27,7 +27,7 @@ exports.getJob = async function (req, res, next) {
 
     let jobs = await Job.aggregate([
         {
-          $match: filters,
+          $match: {...filters,isDeleted:false},
         },
         {
           $facet:{
@@ -157,7 +157,9 @@ exports.getJob = async function (req, res, next) {
 };
 
 exports.getSingleJob = async (req, res) => {
-  const job = await Job.findById(req.params.id);
+  const job = await Job.findById(req.params.id).populate({
+    path:"category",
+  });
   if (!job) {
     return res.status(404).json({
       success: false,
@@ -257,11 +259,19 @@ exports.postJob = async function (req, res) {
 //delete a job
 exports.deleteJob = async function (req, res, next) {
   try {
-    let job = await Job.findByIdAndDelete(req.params.id);
+    let job = await Job.findByIdAndUpdate(req.params.id,{
+      $set:{
+        isDeleted:true
+      }
+    });
     if (!job) {
       return next(new ErrorHandler("Problem in deleting the job", 403));
     }
-    await Application.deleteMany({ job: req.params.id });
+    await Application.updateMany({ job: req.params.id },{
+      $set:{
+        isDeleted:true
+      }
+    });
 
     return res.status(200).json({
       success: true,

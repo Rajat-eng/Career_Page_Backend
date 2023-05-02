@@ -40,6 +40,10 @@ const jobSchema=new mongoose.Schema({
     },
     perks:{
         type:Array
+    },
+    isDeleted:{
+        type:Boolean,
+        default:false
     }
 },{
     timestamps:true,
