@@ -72,28 +72,6 @@ exports.getApplications = async function (req, res) {
 };
 
 
-
-exports.getMyApplications = async function (req, res, next) {
-  try {  
-    const applications = await Application.find({
-      applicant: req.user._id,
-    }).populate([ { path: "job" }, { path: "applicant" } ]);
-   
-    if (!applications || !applications.length) {
-      return next(new ErrorHandler("No applications", 404));
-    }
-    return res.status(200).json({
-      success: true,
-      applications,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
-
 exports.updateApplication = async function (req, res) {
   try {
     await Application.findByIdAndUpdate(
@@ -113,3 +91,21 @@ exports.updateApplication = async function (req, res) {
     });
   }
 };
+
+exports.getMyApplications=async function(req,res,next){
+  try {
+    const applications=await Application.find({applicant:req.user._id})
+
+    return res.status(200).json({
+      success:true,
+      applications
+    })
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Intrnal server error",
+    });
+  }
+ 
+}

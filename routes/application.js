@@ -1,7 +1,7 @@
 const router=require('express').Router()
 
 const {isAuthenticated,authorizeRoles}=require('../middleware/verifyToken')
-const {scheduleInterview,getApplications,applicationStatus,getMyApplications,filterApplications}=require('../controllers/application');
+const {scheduleInterview,getApplications,applicationStatus,getMyApplications}=require('../controllers/application');
 //schedule an interview
 
 router.route('/schedule/:id').post(isAuthenticated,authorizeRoles("Recruiter"),scheduleInterview);
