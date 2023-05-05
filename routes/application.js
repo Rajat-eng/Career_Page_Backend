@@ -7,8 +7,8 @@ const {scheduleInterview,getApplications,applicationStatus,getMyApplications}=re
 router.route('/schedule/:id').post(isAuthenticated,authorizeRoles("Recruiter"),scheduleInterview);
 
 router.route('/find').get(
-    // isAuthenticated,
-    // authorizeRoles("Recruiter"),
+    isAuthenticated,
+    authorizeRoles("Recruiter"),
     getApplications
 );
 
