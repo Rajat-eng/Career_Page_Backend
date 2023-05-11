@@ -14,6 +14,6 @@ router.route('/find').get(
 
 router.route('/myapplication').get(isAuthenticated,authorizeRoles("Applicant"),getMyApplications);
 
-router.route("/status/:id").put(isAuthenticated,authorizeRoles("Recruiter"),applicationStatus)
+router.route("/status/:id").put(isAuthenticated,authorizeRoles("Recruiter"),applicationStatus);
 
 module.exports=router;

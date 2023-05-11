@@ -131,29 +131,10 @@ exports.getApplications = async function (req, res) {
   }
 };
 
-exports.updateApplication = async function (req, res) {
-  try {
-    await Application.findByIdAndUpdate(
-      { _id: req.params.id },
-      {
-        $set: {
-          status: req.body.status,
-          salaryOffered: req.body.salary,
-        },
-      }
-    );
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Intrnal server error",
-    });
-  }
-};
 
 exports.getMyApplications = async function (req, res, next) {
   try {
-    const applications = await Application.find({ applicant: req.user._id });
+    const applications = await Application.find({ applicant: req.user._id })
 
     return res.status(200).json({
       success: true,

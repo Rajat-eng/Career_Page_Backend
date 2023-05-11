@@ -8,7 +8,6 @@ const ErrorHandler=require('../utils/errorhandler');
 exports.sendCode = async function (req, res,next) {
   const code = Math.floor(1000 + Math.random() * 9000);
   res.app.locals.token = code;
-  console.log(code)
   return res.status(200).json({
     success: true,
     code,

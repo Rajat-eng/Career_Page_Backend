@@ -22,6 +22,6 @@ router.use('/file',fileRoute);
 router.route('/getme').get(isAuthenticated,getProfile);
 
 // logout
-router.route('/logout').get(logout)
+router.route('/logout').post(logout)
 
 module.exports=router
