@@ -67,7 +67,7 @@ exports.getApplications = async function (req, res) {
       let myDate=new Date(today.getTime()-Number(value)*24*60*60*1000)
       filters.createdAt={$gte:myDate,$lte:today}
     }
-    
+
     const currentPage = Number(filters && filters.page) || 1;
 
     const skip = resultPerpage * (currentPage - 1);
