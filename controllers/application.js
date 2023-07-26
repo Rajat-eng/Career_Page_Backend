@@ -67,7 +67,7 @@ exports.getApplications = async function (req, res) {
       let myDate=new Date(today.getTime()-Number(value)*24*60*60*1000)
       filters.createdAt={$gte:myDate,$lte:today}
     }
-    
+
     const currentPage = Number(filters && filters.page) || 1;
 
     const skip = resultPerpage * (currentPage - 1);
@@ -153,7 +153,7 @@ exports.updateApplication = async function (req, res) {
 
 exports.getMyApplications = async function (req, res, next) {
   try {
-    const applications = await Application.find({ applicant: req.user._id });
+    const applications = await Application.find({ applicant: req.user._id }).populate({path:'job'});
 
     return res.status(200).json({
       success: true,
