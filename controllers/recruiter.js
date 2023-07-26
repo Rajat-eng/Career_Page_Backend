@@ -28,7 +28,6 @@ exports.register = async function (req, res) {
 
 exports.login = async function (req, res, next) {
   try {
-    // console.log("hr");
     const { email, password } = req.body;
 
     const recruiter = await Recruiter.findOne({ email });
